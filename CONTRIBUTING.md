@@ -93,7 +93,8 @@ The `Release` workflow then:
 
 Requirements:
 
-- the `NPM_TOKEN` repository secret: a granular npm access token with **Read and write** on `dsh-surface` and **Bypass 2FA** enabled;
-- a public repository, so npm can attest the provenance through `id-token: write`.
+- a **Trusted Publisher** connection on npmjs.com for `dsh-surface`: provider `GitHub Actions`, organization or user `woolsen`, repository `dsh-surface`, workflow filename `release.yml`, and **Allow `npm publish`** checked. Publishing then authenticates through OIDC — there is **no `NPM_TOKEN` secret** and no npm token to rotate;
+- a public repository, so npm can attest the provenance through `id-token: write`;
+- the workflow upgrades npm to `^11.5.1` before publishing, because the CLI bundled with Node 22 is too old for trusted publishing.
 
 Re-running a tag is safe: the publish step is skipped when the version already exists, and the release step is idempotent. Do not run `npm publish` locally for a version that the workflow will publish; pick one path.

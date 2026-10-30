@@ -25,7 +25,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs a newer CLI than the one bundled with Node 22.
+      - name: Upgrade npm
+        run: npm install -g npm@^11.5.1
 
       - name: Install
         run: npm ci
@@ -52,11 +55,11 @@ jobs:
       - name: Check
         run: npm run check
 
+      # No NODE_AUTH_TOKEN on purpose: npm exchanges the OIDC token for a
+      # short-lived publish credential granted by the trusted publisher.
       - name: Publish to npm
         if: steps.version.outputs.published == 'false'
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub release
         env:
