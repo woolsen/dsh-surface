@@ -76,12 +76,12 @@
     "@deepseek-ai/dsh-tools": "*"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
-    "@types/node": "^22.0.0",
-    "@types/react": "^18.3.0",
-    "esbuild": "^0.25.0",
+    "@deepseek-ai/dsh-tools": "0.2.1-rc.4",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "esbuild": "^0.28.2",
     "oxlint": "^1.90.0",
     "prettier": "^3.9.0",
-    "typescript": "^5.7.0"
+    "typescript": "^7.0.2"
   }
 }
