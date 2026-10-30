@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/woolsen/dsh-surface/discussions
+    about: Ask a question or discuss a design before opening an issue.
+  - name: Security report
+    url: https://github.com/woolsen/dsh-surface/security/advisories/new
+    about: Report a vulnerability privately.
