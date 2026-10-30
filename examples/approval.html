@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Release approval</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 16px;
+        font-family: var(--font-sans);
+      }
+      .card {
+        border: 1px solid var(--border);
+        background: var(--card);
+        border-radius: var(--radius);
+        padding: 16px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 18px;
+      }
+      p {
+        margin: 0 0 14px;
+        color: var(--muted-foreground);
+        font-size: 13px;
+      }
+      .choices {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .choice {
+        flex: 1 1 160px;
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) - 2px);
+        padding: 10px 12px;
+        cursor: pointer;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        font: inherit;
+      }
+      .choice[aria-pressed='true'] {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 1px var(--primary);
+      }
+      .choice strong {
+        display: block;
+        font-size: 13px;
+      }
+      .choice span {
+        color: var(--muted-foreground);
+        font-size: 12px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted-foreground);
+        margin-bottom: 4px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 64px;
+        resize: vertical;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--background);
+        color: var(--foreground);
+        font: inherit;
+        font-size: 13px;
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      button.submit {
+        border: 0;
+        border-radius: 8px;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        padding: 8px 16px;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.submit:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .status {
+        font-size: 12px;
+        color: var(--muted-foreground);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Release approval</h1>
+      <p>Choose whether this release can ship, then add an optional note.</p>
+      <div class="choices" role="group" aria-label="Release decision">
+        <button class="choice" type="button" data-value="approve" aria-pressed="true">
+          <strong>Approve</strong><span>v4.1.0 · low risk</span>
+        </button>
+        <button class="choice" type="button" data-value="reject" aria-pressed="false">
+          <strong>Hold</strong><span>Wait for the next regression run</span>
+        </button>
+      </div>
+      <label for="note">Note (optional)</label>
+      <textarea id="note" placeholder="For example: watch the error rate for 30 minutes"></textarea>
+      <div class="actions">
+        <button class="submit" type="button" id="send">Submit decision</button>
+        <span class="status" id="status"></span>
+      </div>
+    </div>
+    <script>
+      var choice = 'approve'
+      var status = document.getElementById('status')
+      var send = document.getElementById('send')
+      document.querySelectorAll('.choice').forEach(function (button) {
+        button.addEventListener('click', function () {
+          choice = button.dataset.value
+          document.querySelectorAll('.choice').forEach(function (other) {
+            other.setAttribute('aria-pressed', String(other === button))
+          })
+        })
+      })
+      send.addEventListener('click', function () {
+        var note = document.getElementById('note').value.trim()
+        send.disabled = true
+        status.textContent = 'Submitting…'
+        dshSurface
+          .submit(
+            { decision: choice, note: note },
+            (choice === 'approve' ? 'Approved' : 'Hold') + (note ? ': ' + note : ''),
+          )
+          .then(function () {
+            status.textContent = 'Submitted'
+          })
+          .catch(function (error) {
+            send.disabled = false
+            status.textContent = 'Submit failed: ' + error.message
+          })
+      })
+    </script>
+  </body>
+</html>

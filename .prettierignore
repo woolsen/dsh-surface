@@ -1,0 +1,7 @@
+node_modules/
+lib/
+package-lock.json
+docs/*.png
+docs/*.jpg
+docs/*.webp
+.playwright-cli/

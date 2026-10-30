@@ -1,0 +1,6 @@
+# dsh-surface bundle: insert the plugin into the host profile.
+- insert:
+    - id: dsh-surface
+      name: 'dsh-surface'
+      config:
+        defaultTimeoutSeconds: 600
