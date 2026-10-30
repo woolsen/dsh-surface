@@ -60,7 +60,8 @@ test('a missing callId or summary is a 400', async () => {
 
 test('oversized data is a 413 and leaves the call waiting', async () => {
   const waits = createWaitRegistry()
-  waits.create('call-1')
+  const controller = new AbortController()
+  const pending = waits.create('call-1', { signal: controller.signal })
 
   const response = await handleAnswerRequest(
     waits,
@@ -73,6 +74,9 @@ test('oversized data is a 413 and leaves the call waiting', async () => {
 
   assert.equal(response.status, 413)
   assert.equal(waits.size, 1)
+
+  controller.abort()
+  await assert.rejects(pending, (error) => error.code === 'ABORTED')
 })
 
 test('only POST is accepted', async () => {
