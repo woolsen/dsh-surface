@@ -77,8 +77,6 @@ export function createWaitRegistry({ defaultTimeoutMs = DEFAULT_TIMEOUT_MS } = {
           () => settle(callId, entry, { answered: false, reason: 'timeout' }),
           timeoutMs,
         )
-        if (typeof entry.timer === 'object' && entry.timer !== null && 'unref' in entry.timer)
-          entry.timer.unref()
       }
 
       return promise
