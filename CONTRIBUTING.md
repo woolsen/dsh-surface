@@ -77,11 +77,23 @@ docs: document the desktop verification gap
 
 ## Release
 
-Maintainers only:
+Releases are tag-driven and fully automated. Maintainers only bump the version and push the tag:
 
 ```sh
-npm version patch   # or minor/major
+npm version patch   # or minor / major; creates a commit and a vX.Y.Z tag
 git push --follow-tags
 ```
 
-The `release` workflow publishes to npm with provenance when a `v*` tag is pushed. It needs the `NPM_TOKEN` repository secret unless npm trusted publishing is configured.
+The `Release` workflow then:
+
+1. checks that the tag matches `package.json` (for example `v0.1.1` ↔ `0.1.1`);
+2. runs `npm ci` and `npm run check`;
+3. publishes to npm with provenance **only if that version is not already on the registry**;
+4. creates a GitHub Release with generated notes (or leaves an existing release alone).
+
+Requirements:
+
+- the `NPM_TOKEN` repository secret: a granular npm access token with **Read and write** on `dsh-surface` and **Bypass 2FA** enabled;
+- a public repository, so npm can attest the provenance through `id-token: write`.
+
+Re-running a tag is safe: the publish step is skipped when the version already exists, and the release step is idempotent. Do not run `npm publish` locally for a version that the workflow will publish; pick one path.
