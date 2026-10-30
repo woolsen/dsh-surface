@@ -1,4 +1,4 @@
-import { rm, mkdir } from 'node:fs/promises'
+import { mkdir, rm } from 'node:fs/promises'
 import { build } from 'esbuild'
 
 const PLATFORM_MODULES = [
@@ -17,7 +17,7 @@ await mkdir('lib', { recursive: true })
 // Host half: plain ESM, all harness packages stay external so the Loader's
 // own instances are used.
 await build({
-  entryPoints: ['src/index.js'],
+  entryPoints: ['src/index.ts'],
   outfile: 'lib/index.js',
   bundle: true,
   format: 'esm',

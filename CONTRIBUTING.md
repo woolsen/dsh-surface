@@ -23,7 +23,7 @@ npm run check
 
 | Command             | What it does                                                               |
 | ------------------- | -------------------------------------------------------------------------- |
-| `npm test`          | `node:test` suite (`tests/*.test.js`)                                      |
+| `npm test`          | `node:test` suite (`tests/*.test.ts`, run through Node type stripping)     |
 | `npm run build`     | bundles `lib/index.js` (host ESM) and `lib/client.js` (loader-wrapped CJS) |
 | `npm run lint`      | oxlint over `src`, `tests`, `scripts`                                      |
 | `npm run typecheck` | `tsc --noEmit`                                                             |
@@ -53,7 +53,7 @@ Open the printed `?token=` URL, start a new session, and ask the model to call `
 
 Read [docs/architecture.md](docs/architecture.md) first. The important invariants:
 
-- the tool waits **only** through `src/wait.js`; do not add a second pending map;
+- the tool waits **only** through `src/wait.ts`; do not add a second pending map;
 - the answer route must stay on `ctx.connection.fetch` (owner peer, authenticated), never on `ctx.webServer` without admission;
 - the iframe keeps `sandbox="allow-scripts allow-forms"` **without** `allow-same-origin`;
 - pages must stay self-contained; network access is blocked by CSP on purpose.

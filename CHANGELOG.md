@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Source is TypeScript end to end: the host half and the build script moved from `.js`/`.mjs` to `.ts`, and the tests run `.ts` directly through Node type stripping. The published `lib/` bundles and the plugin's runtime behaviour are unchanged.
+
 ## [0.1.1] - 2026-10-30
 
 ### Changed

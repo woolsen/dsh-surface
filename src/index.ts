@@ -1,6 +1,7 @@
+import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { ANSWER_PATH, handleAnswerRequest } from './answer.js'
-import { createWaitRegistry } from './wait.js'
+import { ANSWER_PATH, handleAnswerRequest } from './answer.ts'
+import { createWaitRegistry } from './wait.ts'
 
 /** Plugin display name, for diagnostics only. */
 export const name = 'dsh-surface'
@@ -11,21 +12,46 @@ export const inject = ['tools']
 const MAX_HTML_BYTES = 200_000
 const MAX_TITLE_CHARS = 120
 const DEFAULT_TIMEOUT_SECONDS = 600
+const MAX_TIMEOUT_SECONDS = 3600
+
+/** Plugin config: the deadline a `render` call gets when it asks for none. */
+export interface SurfaceConfig {
+  defaultTimeoutSeconds?: number
+}
+
+/**
+ * The host's authenticated `/api` route table, provided by the web carrier's
+ * `connection` service. Declared locally because this plugin must also load on
+ * a headless host that provides no connection at all.
+ */
+interface FetchRoute {
+  path: string
+  methods: string[]
+  requestBody: 'buffered'
+  fetch: (request: Request) => Response | Promise<Response>
+}
+
+interface FetchRoutes {
+  /** Register one route; returns the disposer that removes it again. */
+  register(route: FetchRoute): () => void
+}
+
+interface ConnectionLike {
+  fetch?: FetchRoutes
+}
 
 /** A crude title for the call card; the page's own <title> stays authoritative. */
-function titleOf(args) {
+function titleOf(args: { title?: string }): string {
   if (typeof args?.title === 'string' && args.title.trim() !== '') return args.title.trim()
   return 'Interactive page'
 }
 
-/**
- * @param {import('@deepseek-ai/cordis').Context} ctx
- * @param {{ defaultTimeoutSeconds?: number }} [config]
- */
-export function apply(ctx, config = {}) {
-  const defaultTimeoutSeconds = Number.isFinite(config.defaultTimeoutSeconds)
-    ? config.defaultTimeoutSeconds
-    : DEFAULT_TIMEOUT_SECONDS
+export function apply(ctx: Context, config: SurfaceConfig = {}): void {
+  const configuredTimeout = config.defaultTimeoutSeconds
+  const defaultTimeoutSeconds =
+    typeof configuredTimeout === 'number' && Number.isFinite(configuredTimeout)
+      ? configuredTimeout
+      : DEFAULT_TIMEOUT_SECONDS
   const waits = createWaitRegistry({ defaultTimeoutMs: defaultTimeoutSeconds * 1000 })
 
   ctx.tools.register(
@@ -70,7 +96,7 @@ export function apply(ctx, config = {}) {
         const requested = Number(args?.timeoutSeconds)
         const timeoutMs =
           Number.isFinite(requested) && requested > 0
-            ? Math.min(requested, 3600) * 1000
+            ? Math.min(requested, MAX_TIMEOUT_SECONDS) * 1000
             : defaultTimeoutSeconds * 1000
 
         const result = await waits.create(exec.callId, { signal: exec.signal, timeoutMs })
@@ -83,9 +109,9 @@ export function apply(ctx, config = {}) {
   // without the web carrier (headless/TUI) simply has no page to submit, and
   // the tool falls back to its timeout.
   ctx.inject(['connection'], (scope) => {
-    const connection = scope.get('connection')
+    const connection = scope.get('connection') as ConnectionLike | undefined
     const fetchRoutes = connection?.fetch
-    if (typeof fetchRoutes?.register !== 'function') return
+    if (fetchRoutes === undefined || typeof fetchRoutes.register !== 'function') return
 
     scope.effect(
       () =>

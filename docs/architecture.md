@@ -22,20 +22,20 @@ sequenceDiagram
     H-->>M: {"answered":true,"summary","data"}
 ```
 
-## Host half (`src/index.js`)
+## Host half (`src/index.ts`)
 
 - Registers the `render` tool with `defineTool`. It intentionally declares **no** `timeoutMs`; the only deadline is the per-call `timeoutSeconds`.
 - Validates `html` (non-empty, ≤ 200 KB), `title` (≤ 120 chars), and `timeoutSeconds` (positive, capped at 3600).
 - Calls `waits.create(exec.callId, { signal: exec.signal, timeoutMs })` and returns the JSON-encoded result.
 
-The `waits` registry (`src/wait.js`) is a `Map<callId, entry>`:
+The `waits` registry (`src/wait.ts`) is a `Map<callId, entry>`:
 
 - first answer wins; later answers get `not-waiting` (HTTP 404);
 - `exec.signal` aborts the wait with an `ABORTED` error;
 - timeout resolves `{ answered: false, reason: 'timeout' }` instead of hanging the turn;
 - the entry is removed on every settle, so the map cannot grow without bound.
 
-## Answer route (`src/answer.js`)
+## Answer route (`src/answer.ts`)
 
 Registered with `ctx.connection.fetch.register` on the host's authenticated `/api` channel:
 

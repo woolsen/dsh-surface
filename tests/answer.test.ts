@@ -1,14 +1,20 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { createWaitRegistry } from '../src/wait.js'
-import { handleAnswerRequest } from '../src/answer.js'
+import { createWaitRegistry, type WaitAnswer, type WaitResult } from '../src/wait.ts'
+import { handleAnswerRequest } from '../src/answer.ts'
 
-function answerRequest(body) {
+function answerRequest(body: unknown): Request {
   return new Request('http://localhost/api/dsh-surface/answer', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   })
+}
+
+/** Narrow a settled wait to its answered arm, failing the test otherwise. */
+function answered(result: WaitResult): WaitAnswer {
+  if (!result.answered) throw new Error('expected an answered wait')
+  return result
 }
 
 test('a valid submission resolves the waiting call', async () => {
@@ -76,7 +82,7 @@ test('oversized data is a 413 and leaves the call waiting', async () => {
   assert.equal(waits.size, 1)
 
   controller.abort()
-  await assert.rejects(pending, (error) => error.code === 'ABORTED')
+  await assert.rejects(pending, (error: unknown) => (error as { code?: string }).code === 'ABORTED')
 })
 
 test('only POST is accepted', async () => {
@@ -97,5 +103,5 @@ test('the first submission wins and the second is a 404', async () => {
 
   assert.equal(first.status, 200)
   assert.equal(second.status, 404)
-  assert.equal((await pending).summary, 'one')
+  assert.equal(answered(await pending).summary, 'one')
 })

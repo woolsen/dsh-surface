@@ -127,9 +127,9 @@ npm run build      # lib/index.js + lib/client.js
 Project layout:
 
 ```text
-src/index.js              host: render tool, wait registry, answer route
-src/wait.js               pending calls (first answer wins, cancel, timeout)
-src/answer.js             POST body validation and responses
+src/index.ts              host: render tool, wait registry, answer route
+src/wait.ts               pending calls (first answer wins, cancel, timeout)
+src/answer.ts             POST body validation and responses
 src/client/index.tsx      client plugin: tool.call.toolview registration
 src/client/RenderCard.tsx iframe card, theme, height, submit bridge
 src/client/shell.ts       frame document, CSP, height script, bridge

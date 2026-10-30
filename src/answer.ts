@@ -7,12 +7,27 @@
  * handler runs. Everything here is payload validation plus first-answer-wins.
  */
 
+import type { WaitRegistry } from './wait.ts'
+
 export const ANSWER_PATH = '/api/dsh-surface/answer'
 export const MAX_SUMMARY_CHARS = 500
 export const MAX_DATA_BYTES = 16_000
 const MAX_CALL_ID_CHARS = 200
 
-function json(status, body) {
+/** Every failure the route reports, one code per validation step. */
+export type AnswerErrorCode =
+  | 'method-not-allowed'
+  | 'invalid-json'
+  | 'invalid-body'
+  | 'invalid-call-id'
+  | 'invalid-summary'
+  | 'invalid-data'
+  | 'data-too-large'
+  | 'not-waiting'
+
+type AnswerBody = { ok: true } | { ok: false; error: AnswerErrorCode }
+
+function json(status: number, body: AnswerBody): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
@@ -20,13 +35,16 @@ function json(status, body) {
 }
 
 /**
- * @param {ReturnType<import('./wait.js').createWaitRegistry>} waits
- * @param {Request} request
+ * Validate one submission and hand it to the waiting call.
+ *
+ * @param waits - the host-wide waiting map.
+ * @param request - the buffered POST body.
+ * @returns `200` accepted, else the first failed validation step.
  */
-export async function handleAnswerRequest(waits, request) {
+export async function handleAnswerRequest(waits: WaitRegistry, request: Request): Promise<Response> {
   if (request.method !== 'POST') return json(405, { ok: false, error: 'method-not-allowed' })
 
-  let body
+  let body: unknown
   try {
     body = await request.json()
   } catch {
@@ -34,7 +52,7 @@ export async function handleAnswerRequest(waits, request) {
   }
   if (body === null || typeof body !== 'object') return json(400, { ok: false, error: 'invalid-body' })
 
-  const { callId, summary, data = null } = body
+  const { callId, summary, data = null } = body as Record<string, unknown>
   if (typeof callId !== 'string' || callId.length === 0 || callId.length > MAX_CALL_ID_CHARS) {
     return json(400, { ok: false, error: 'invalid-call-id' })
   }
@@ -42,7 +60,7 @@ export async function handleAnswerRequest(waits, request) {
     return json(400, { ok: false, error: 'invalid-summary' })
   }
 
-  let encoded
+  let encoded: string | undefined
   try {
     encoded = JSON.stringify(data)
   } catch {
